@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>利率计算器</title>
+    <style>
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+        .input-group { margin: 10px 0; }
+        label { display: inline-block; width: 120px; }
+        input { padding: 5px; width: 200px; }
+        button { padding: 8px 16px; margin-top: 10px; }
+        .result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>贷款利率计算器</h2>
+        <div class="input-group">
+            <label>本金（元）:</label>
+            <input type="number" id="principal" step="100" value="10000">
+        </div>
+        <div class="input-group">
+            <label>分期期数:</label>
+            <input type="number" id="periods" value="12">
+        </div>
+        <div class="input-group">
+            <label>每期还款（元）:</label>
+            <input type="number" id="pmt" step="0.01" value="1000">
+        </div>
+        <button onclick="calculate()">计算利率</button>
+        
+        <div class="result">
+            <p>月利率: <span id="monthlyRate">0.00</span>%</p>
+            <p>年化利率（单利）: <span id="annualRate">0.00</span>%</p>
+        </div>
+    </div>
+
+    <script>
+        function calculateIRR(cashFlows, guess = 0.1) {
+            const maxIteration = 100
+            const tolerance = 0.0000001
+            let x = guess
+            
+            for(let i = 0; i < maxIteration; i++) {
+                const npv = cashFlows.reduce((sum, cf, t) => sum + cf / Math.pow(1 + x, t), 0)
+                const derivative = cashFlows.reduce((sum, cf, t) => sum - t * cf / Math.pow(1 + x, t + 1), 0)
+                
+                const newX = x - npv / derivative
+                if(Math.abs(newX - x) < tolerance) return newX
+                x = newX
+            }
+            return x
+        }
+
+        function calculate() {
+            // 获取输入值
+            const principal = parseFloat(document.getElementById('principal').value)
+            const periods = parseInt(document.getElementById('periods').value)
+            const pmt = parseFloat(document.getElementById('pmt').value)
+
+            // 构建现金流
+            const cashFlows = [principal]
+            for(let i = 0; i < periods; i++) {
+                cashFlows.push(-pmt)
+            }
+
+            // 计算IRR
+            const monthlyRate = calculateIRR(cashFlows) * 100
+            const annualRate = monthlyRate * 12
+
+            // 显示结果
+            document.getElementById('monthlyRate').textContent = monthlyRate.toFixed(2)
+            document.getElementById('annualRate').textContent = annualRate.toFixed(2)
+        }
+    </script>
+</body>
+</html>
